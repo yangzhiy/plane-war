@@ -1,0 +1,183 @@
+import pygame
+import myplane
+import bullet
+import enemy
+import supplly
+from sys import exit
+from pygame.locals import *
+'''
+加载资源
+初始化
+游戏循环
+退出游戏
+
+'''
+pygame.init()
+screen=pygame.display.set_mode((480,700),0,0)
+bg=pygame.image.load('images/background.png').convert_alpha()
+screen.blit(bg,(0,0))
+ag=pygame.image.load('images/again.png').convert_alpha()
+ag_rect=ag.get_rect()
+ag_rect.x,ag_rect.y=(90,330)
+go=pygame.image.load('images/gameover.png').convert_alpha()
+go_rect=go.get_rect()
+go_rect.x,go_rect.y=(90,390)
+font=pygame.font.Font('CONSOLA.TTF',32)
+bom=pygame.image.load('images/bomb.png').convert_alpha()
+ff=pygame.image.load('images/life.png').convert_alpha()
+pa=pygame.image.load('images/pause_nor.png').convert_alpha()
+pa_rect=pa.get_rect()
+pa_rect.x,pa_rect.y=(420,0)
+ru=pygame.image.load('images/resume_nor.png').convert_alpha()
+ru_rect=ru.get_rect()
+ru_rect.x,ru_rect.y=(420,30)
+score1=0
+def main():
+
+    clock=pygame.time.Clock()
+    plane=myplane.Myplane(480,700)
+    bullet_list=[bullet.Bullet(plane.rect) for x in range(4)]
+    bullet_index=0
+    delay=0    
+    doubullet_list=[bullet.DouBullet(plane.rect) for x in range(4)]
+    doubullet_index=0
+    doubullet1_list=[bullet.DouBullet1(plane.rect) for x in range(4)]
+    doubullet1_index=0
+    enemys_group=pygame.sprite.Group([enemy.Enemy(480,700) for x in range(10)]+[enemy.Enemyz(480,700) for x in range(5)]+[enemy.Enemyd(480,700) for x in range(2)])
+    global score
+    score=0
+    
+    bomb=supplly.Bomb_subbly(480,700)
+    BOMBSUPPLYEVN=USEREVENT+1
+    pygame.time.set_timer(BOMBSUPPLYEVN,2*1000)
+    buet=supplly.Buet_subbly(480,700)
+    BUETSUPPLYEVN=USEREVENT+2
+    pygame.time.set_timer(BUETSUPPLYEVN,5*1000)
+    while True:
+        screen.blit(bg,(0,0))
+        screen.blit(pa,pa_rect)        
+        
+        for event in pygame.event.get():
+            if event.type==QUIT:
+                exit()
+             
+                  
+            elif event.type==BOMBSUPPLYEVN:
+                bomb.active=True
+            elif event.type==KEYDOWN:
+                  if event.key==K_SPACE:
+                     bomb.use(enemys_group)
+            elif event.type==BUETSUPPLYEVN:
+                buet.active=True
+            elif pygame.mouse.get_pressed()[0]:
+                nx,ny=pygame.mouse.get_pos()
+                if pa_rect.collidepoint(nx,ny):
+                    pygame.display.flip()
+                    screen.blit(bg,(0,0))
+                    while True:
+                         for event in pygame.event.get():
+                             if event.type==QUIT:
+                                 exit()
+                        
+                            
+                         screen.blit(ru,ru_rect)
+                         pygame.display.flip()
+                         if pygame.mouse.get_pressed()[0]:
+                             n1x,n2y=pygame.mouse.get_pos()
+                             if ru_rect.collidepoint(n1x,n2y):
+                                 break
+        
+        plane.move()    
+        plane.collide(enemys_group)
+    
+        plane.draw(screen)
+        screen.blit(ff,(0,480))
+        
+        screen.blit(font.render("x"+str(plane.life_num),True,(0,0,0)),(50,500))
+        if buet.flag==0:        
+            if  not delay% 12:
+                bullet_list[bullet_index% 4].reset(plane.rect)
+                bullet_index+=1
+                
+            for b in bullet_list:
+                b.move()
+                b.collide(enemys_group)
+                b.draw(screen)
+            
+        else:
+            buet.flag-=1
+            if not delay% 12:
+                doubullet_list[doubullet_index% 4].reset(plane.rect)
+                doubullet_index+=1
+
+                
+                
+            for k in doubullet_list:
+             
+                k.move()
+                k.collide(enemys_group)
+                k.draw(screen)
+                
+                    
+            if not delay% 12:
+                doubullet1_list[doubullet1_index% 4].reset(plane.rect)
+                doubullet1_index+=1
+            for j in doubullet1_list:
+                j.move()
+                j.collide(enemys_group)
+                j.draw(screen)
+
+        for e in enemys_group:
+            e.move()
+
+            e.draw(screen)
+            if e.score:
+                score+=e.score
+                e.score=0
+        
+        bomb.move()
+        bomb.collide(plane)
+        bomb.draw(screen)
+        
+        buet.move()
+        buet.collide(plane)
+        buet.draw(screen)
+        screen.blit(bom,(350,480))   
+        screen.blit(font.render("x"+str(bomb.num),True,(0,0,0)),(420,500))
+
+        screen.blit(font.render("Score:"+str(score),True,(0,0,0)),(0,0))
+
+        if  plane.life_num==0:
+            break
+            
+        
+        
+        delay+=1
+        clock.tick(50)
+        pygame.display.flip()
+def game():
+    while True:
+        main()
+        screen.blit(bg,(0,0))
+        screen.blit(ag,ag_rect)
+        screen.blit(go,go_rect) 
+        screen.blit(font.render("YouScore:"+str(score)+str(score1),True,(0,0,0)),(100,290))
+
+    
+        pygame.display.flip()
+        while True:
+            for event in pygame.event.get():
+                 if event.type==QUIT:
+                     exit()
+            if pygame.mouse.get_pressed()[0]:
+                print(pygame.mouse.get_pressed())
+                mx,my=pygame.mouse.get_pos()
+                print(mx,my)
+                if ag_rect.collidepoint(mx,my):
+                    break
+                if go_rect.collidepoint(mx,my):
+                    pygame.quit()
+                    exit()
+
+game()        
+

@@ -1,0 +1,100 @@
+import pygame
+import myplane
+import bullet
+import enemy
+import supplly
+from sys import exit
+from pygame.locals import *
+'''
+加载资源
+初始化
+游戏循环
+退出游戏
+
+'''
+pygame.init()
+screen=pygame.display.set_mode((480,700),0,0)
+bg=pygame.image.load('images/background.png').convert_alpha()
+screen.blit(bg,(0,0))
+ag=pygame.image.load('images/again.png').convert_alpha()
+ag_rect=ag.get_rect()
+ag_rect.x,ag_rect.y=(90,330)
+go=pygame.image.load('images/gameover.png').convert_alpha()
+go_rect=go.get_rect()
+go_rect.x,go_rect.y=(90,390)
+font=pygame.font.Font('CONSOLA.TTF',32)
+bom=pygame.image.load('images/bomb.png').convert_alpha()
+def main():
+
+    clock=pygame.time.Clock()
+    plane=myplane.Myplane(480,700)
+    bullet_list=[bullet.Bullet(plane.rect) for x in range(4)]
+    bullet_index=0
+    delay=0
+    enemys_group=pygame.sprite.Group([enemy.Enemy(480,700) for x in range(10)])
+    score=0
+    bomb=supplly.Bomb_subbly(480,700)
+    BOMBSUPPLYEVN=USEREVENT+1
+    pygame.time.set_timer(BOMBSUPPLYEVN,30*1000)
+    while True:
+        screen.blit(bg,(0,0))
+        for event in pygame.event.get():
+            if event.type==QUIT:
+                exit()
+            elif event.type==BOMBSUPPLYEVN:
+                bomb.active=True
+        plane.move()
+        plane.collide(enemys_group)
+        plane.draw(screen)
+        if  not delay% 12:
+             bullet_list[bullet_index% 4].reset(plane.rect)
+             bullet_index+=1
+
+        for b in bullet_list:
+            b.move()
+            b.collide(enemys_group)
+            b.draw(screen)
+        for e in enemys_group:
+            e.move()
+            e.draw(screen)
+            if e.score:
+                score+=e.score
+                e.score=0
+        
+        bomb.move()
+        bomb.collide(plane)
+        bomb.draw(screen)
+        screen.blit(bom,(300,450))
+        screen.blit(font.render("x:"str(num),True,(0,0,0)),(300,450))
+        screen.blit(font.render("Score:"+str(score),True,(0,0,0)),(0,0))
+
+        if  plane.life_num==0:
+            break
+            
+        
+        
+        delay+=1
+        clock.tick(50)
+        pygame.display.flip()
+def game():
+    while True:
+        main()
+        screen.blit(bg,(0,0))
+        screen.blit(ag,ag_rect)
+        screen.blit(go,go_rect)
+        pygame.display.flip()
+        while True:
+            for event in pygame.event.get():
+                if event.type==QUIT:
+                    exit()
+            if pygame.mouse.get_pressed()[0]:
+                print(pygame.mouse.get_pressed())
+                mx,my=pygame.mouse.get_pos()
+                print(mx,my)
+                if ag_rect.collidepoint(mx,my):
+                    break
+                if go_rect.collidepoint(mx,my):
+                    pygame.quit()
+                    exit()
+game()        
+
